@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Account Suspended/Pending - Organ Connect{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="glass-card text-center border-danger">
+            <h2 class="text-warning mb-4 font-display">Hospital Verification Status</h2>
+            
+            {% if hospital %}
+                {% if hospital.status == 'PENDING' %}
+                    <div class="alert alert-warning py-3">
+                        <h4 class="alert-heading">🔍 Registration Request Pending Review</h4>
+                        <p class="mb-0">The registration for <strong>{{ hospital.name }}</strong> (Registration Number: <code>{{ hospital.registration_number }}</code>) is currently under review by the System Admin.</p>
+                    </div>
+                    <p class="text-muted">Once verified, your login credentials will be activated. Please try again later.</p>
+                {% elif hospital.status == 'REJECTED' %}
+                    <div class="alert alert-danger py-3">
+                        <h4 class="alert-heading">❌ Registration Request Rejected</h4>
+                        <p class="mb-0">Your hospital registration request was reviewed and rejected by the administrator. If this was an error, please contact the central support team.</p>
+                    </div>
+                {% elif not hospital.is_active %}
+                    <div class="alert alert-danger py-3">
+                        <h4 class="alert-heading">🚫 Access Deactivated / Suspended</h4>
+                        <p class="mb-0">The portal access for <strong>{{ hospital.name }}</strong> has been suspended or revoked by the Admin.</p>
+                    </div>
+                    <p class="text-muted">Please contact the System Admin to restore your access permissions.</p>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-danger py-3">
+                    <h4 class="alert-heading">Invalid Profile</h4>
+                    <p class="mb-0">Your user account does not have a valid hospital profile linked to it.</p>
+                </div>
+            {% endif %}
+
+            <a href="{% url 'logout' %}" class="btn btn-outline-danger mt-4 px-4 py-2">Sign Out</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

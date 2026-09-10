@@ -1,0 +1,947 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Organ Connect{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Custom tab navigation styling */
+    .nav-tabs-custom {
+        border-bottom: 2px solid var(--bg-card-border);
+    }
+    .nav-link-custom {
+        color: #94a3b8 !important;
+        font-weight: 600;
+        border: none !important;
+        border-bottom: 2px solid transparent !important;
+        padding: 0.75rem 1.25rem;
+        transition: all 0.3s ease;
+    }
+    .nav-link-custom:hover {
+        color: #06b6d4 !important;
+    }
+    .nav-link-custom.active {
+        color: #06b6d4 !important;
+        background: transparent !important;
+        border-bottom: 2px solid #06b6d4 !important;
+    }
+    .progress-circle {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background-color: var(--bg-dark);
+        border: 2px solid var(--bg-card-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #94a3b8;
+    }
+    .progress-step.completed .progress-circle {
+        background-color: #198754;
+        border-color: #198754;
+        color: #fff;
+    }
+    .progress-step.active .progress-circle {
+        background-color: #0dcaf0;
+        border-color: #0dcaf0;
+        color: #0f172a;
+        box-shadow: 0 0 10px rgba(13, 202, 240, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- NOTIFICATIONS (Donors & Receivers & Hospitals) -->
+{% if notifications %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h5 class="text-white mb-3">🔔 Notifications</h5>
+        {% for noti in notifications %}
+        <div class="alert alert-info d-flex justify-content-between align-items-center" role="alert">
+            <div>
+                {{ noti.message }}
+                <div class="small text-muted mt-1">{{ noti.created_at|timesince }} ago</div>
+            </div>
+            <a href="{% url 'mark_notification_read' noti.pk %}" class="btn-close" aria-label="Close"></a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- ==============================================
+     AUTOMATIC MATCHED ORGANS SECTION
+     ============================================== -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="glass-card p-4">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                <div>
+                    <h3 class="font-display h4 text-success mb-1">🔗 Matched Organs</h3>
+                    <p class="text-muted small mb-0">Automatic real-time matching of compatible organ donors and receivers</p>
+                </div>
+                <a href="{% url 'matched_organs' %}" class="btn btn-sm btn-outline-success">View Full List ➔</a>
+            </div>
+
+            {% if auto_matched_pairs %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Donor Name</th>
+                            <th>Receiver Name</th>
+                            <th>Organ Type</th>
+                            <th>Blood Group</th>
+                            <th>Match Status</th>
+                            <th>Hospital</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pair in auto_matched_pairs %}
+                        <tr>
+                            <td><strong>{{ pair.donor_name }}</strong> <small class="text-muted font-monospace">({{ pair.donor_id }})</small></td>
+                            <td><strong>{{ pair.receiver_name }}</strong> <small class="text-muted font-monospace">({{ pair.receiver_id }})</small></td>
+                            <td><span class="badge bg-primary fs-6">{{ pair.organ_type }}</span></td>
+                            <td><span class="fw-semibold text-dark">{{ pair.blood_group }}</span></td>
+                            <td><span class="badge bg-success px-2 py-1">Matched</span></td>
+                            <td>
+                                {% if pair.hospital != "Unassigned" %}
+                                    <span>🏢 {{ pair.hospital }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Unassigned</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <div class="fs-1 text-muted mb-2">🩺</div>
+                <h5 class="fw-bold text-secondary">No Matching Organ Available</h5>
+                <p class="text-muted small mb-0">No compatible donor and receiver pairs found matching Organ Type and Blood Group at this time.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+<!-- ==============================================
+     ADMIN PORTAL
+     ============================================== -->
+{% if role == 'ADMIN' %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h1 class="text-info font-display">System Administration Console</h1>
+        <p class="text-muted">Central control portal to manage government hospital requests, donor/receiver verification requests, audit ledgers, and matching operations.</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <a href="{% url 'verify_ledger' %}" class="btn btn-warning px-4 py-2 text-dark font-weight-bold shadow-sm">
+            🛡️ Verify Ledger Chain Integrity
+        </a>
+    </div>
+</div>
+
+<!-- ADMIN KPI METRIC CARDS -->
+<div class="row mb-4">
+    <div class="col-md-3 col-6 mb-3">
+        <div class="glass-card p-3 text-center border-warning">
+            <span class="text-muted small d-block">Pending Hospital Requests</span>
+            <span class="fs-2 font-display fw-bold text-warning">{{ pending_hospitals.count }}</span>
+            <div class="mt-1"><a href="{% url 'admin_hospital_management' %}" class="btn btn-sm btn-outline-warning py-0 px-2 small">Manage</a></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6 mb-3">
+        <div class="glass-card p-3 text-center border-info">
+            <span class="text-muted small d-block">Approved Hospitals</span>
+            <span class="fs-2 font-display fw-bold text-info">{{ approved_hospitals.count }}</span>
+            <div class="mt-1"><a href="{% url 'admin_hospital_management' %}" class="btn btn-sm btn-outline-info py-0 px-2 small">Directory</a></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6 mb-3">
+        <div class="glass-card p-3 text-center border-success">
+            <span class="text-muted small d-block">Organ Donors Pool</span>
+            <span class="fs-2 font-display fw-bold text-success">{{ verified_donors.count }}</span>
+            <span class="small text-muted d-block">({{ pending_donors.count }} Pending)</span>
+            <div class="mt-1"><a href="{% url 'admin_donor_verification' %}" class="btn btn-sm btn-outline-success py-0 px-2 small">View Donors</a></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6 mb-3">
+        <div class="glass-card p-3 text-center border-danger">
+            <span class="text-muted small d-block">Recipients Waitlist</span>
+            <span class="fs-2 font-display fw-bold text-danger">{{ verified_receivers.count }}</span>
+            <span class="small text-muted d-block">({{ pending_receivers.count }} Pending)</span>
+            <div class="mt-1"><a href="{% url 'admin_receiver_verification' %}" class="btn btn-sm btn-outline-danger py-0 px-2 small">View Receivers</a></div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="glass-card">
+
+            <!-- Admin Navigation Tabs -->
+            <ul class="nav nav-tabs nav-tabs-custom mb-4" id="adminTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link nav-link-custom active" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requests" type="button" role="tab">
+                        Hospital Registrations ({{ pending_hospitals.count }})
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link nav-link-custom" id="directory-tab" data-bs-toggle="tab" data-bs-target="#directory" type="button" role="tab">
+                        Hospitals Directory
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link nav-link-custom" id="donors-tab" data-bs-toggle="tab" data-bs-target="#donors" type="button" role="tab">
+                        Donors Pool
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link nav-link-custom" id="receivers-tab" data-bs-toggle="tab" data-bs-target="#receivers" type="button" role="tab">
+                        Recipients waitlist
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link nav-link-custom" id="matches-tab" data-bs-toggle="tab" data-bs-target="#matches" type="button" role="tab">
+                        Allocated Matches
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link nav-link-custom" id="audits-tab" data-bs-toggle="tab" data-bs-target="#audits" type="button" role="tab">
+                        Cryptographic Audit Logs
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="adminTabsContent">
+                <!-- HOSPITAL REGISTRATIONS TAB -->
+                <div class="tab-content active tab-pane fade show" id="requests" role="tabpanel">
+                    <h3 class="h5 text-info mb-3 font-display border-bottom border-secondary pb-2">Pending Hospital Authorizations</h3>
+                    {% if pending_hospitals %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Hospital Name</th>
+                                    <th>Reg. Number</th>
+                                    <th>Address</th>
+                                    <th>Authorized Officer</th>
+                                    <th>Contact Info</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for hosp in pending_hospitals %}
+                                <tr>
+                                    <td><strong>{{ hosp.name }}</strong></td>
+                                    <td><code>{{ hosp.registration_number }}</code></td>
+                                    <td>{{ hosp.address|truncatechars:40 }}</td>
+                                    <td>{{ hosp.authorized_officer }}</td>
+                                    <td>{{ hosp.contact_info }}</td>
+                                    <td>
+                                        <div class="d-flex gap-2">
+                                            <a href="{% url 'admin_hospital_approve' hosp.pk %}" class="btn btn-success btn-sm px-3">Approve</a>
+                                            <a href="{% url 'admin_hospital_reject' hosp.pk %}" class="btn btn-danger btn-sm px-3">Reject</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">No pending hospital registration requests requiring audit.</p>
+                    {% endif %}
+                </div>
+
+                <!-- HOSPITALS DIRECTORY TAB -->
+                <div class="tab-pane fade" id="directory" role="tabpanel">
+                    <h3 class="h5 text-info mb-3 font-display border-bottom border-secondary pb-2">Approved & Registered Network Hospitals</h3>
+                    {% if approved_hospitals or rejected_hospitals %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Hospital Name</th>
+                                    <th>Reg. Number</th>
+                                    <th>Contact</th>
+                                    <th>Status</th>
+                                    <th>Portal Access</th>
+                                    <th>Cross-Hospital Auth</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for hosp in approved_hospitals %}
+                                <tr>
+                                    <td><strong>{{ hosp.name }}</strong></td>
+                                    <td><code>{{ hosp.registration_number }}</code></td>
+                                    <td>{{ hosp.contact_info }}</td>
+                                    <td><span class="badge bg-success">Approved</span></td>
+                                    <td>
+                                        {% if hosp.is_active %}
+                                            <span class="badge bg-info text-dark">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Suspended</span>
+                                        {%  endif %}
+                                    </td>
+                                    <td>
+                                        {% for auth_h in hosp.authorized_hospitals.all %}
+                                            <span class="badge bg-secondary font-monospace mb-1">{{ auth_h.name }}</span>
+                                        {% empty %}
+                                            <span class="text-muted small">None (Local Only)</span>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-2">
+                                            <a href="{% url 'admin_hospital_toggle_status' hosp.pk %}" class="btn btn-sm {% if hosp.is_active %}btn-outline-danger{% else %}btn-info text-dark{% endif %}">
+                                                {% if hosp.is_active %}Suspend{% else %}Activate{% endif %}
+                                            </a>
+                                            <a href="{% url 'admin_hospital_authorize' hosp.pk %}" class="btn btn-sm btn-outline-info">Auth Cross-Access</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% for hosp in rejected_hospitals %}
+                                <tr class="text-muted">
+                                    <td>{{ hosp.name }}</td>
+                                    <td><code>{{ hosp.registration_number }}</code></td>
+                                    <td>{{ hosp.contact_info }}</td>
+                                    <td><span class="badge bg-danger">Rejected</span></td>
+                                    <td><span class="badge bg-secondary">Inactive</span></td>
+                                    <td>—</td>
+                                    <td>—</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">No registered hospitals in the system database.</p>
+                    {% endif %}
+                </div>
+
+                <!-- DONORS POOL -->
+                <div class="tab-pane fade" id="donors" role="tabpanel">
+                    <h3 class="h5 text-info mb-3 font-display border-bottom border-secondary pb-2">Global Donors Pool</h3>
+                    {% if pending_donors or verified_donors %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Anonymous ID</th>
+                                    <th>Age</th>
+                                    <th>Blood</th>
+                                    <th>Organ</th>
+                                    <th>Designated Hospital</th>
+                                    <th>Status</th>
+                                    <th>Audit View</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for d in pending_donors %}
+                                <tr>
+                                    <td><strong>{{ d.anonymous_id }}</strong></td>
+                                    <td>{{ d.age }}</td>
+                                    <td>{{ d.blood_group }}</td>
+                                    <td>{{ d.organ }}</td>
+                                    <td>{{ d.hospital.name|default:"Not Assigned" }}</td>
+                                    <td><span class="badge bg-warning text-dark">Pending Audit</span></td>
+                                    <td>
+                                        <a href="{% url 'hospital_verify_detail' 'donor' d.pk %}" class="btn btn-sm btn-outline-info">View Records</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% for d in verified_donors %}
+                                <tr>
+                                    <td><strong>{{ d.anonymous_id }}</strong></td>
+                                    <td>{{ d.age }}</td>
+                                    <td>{{ d.blood_group }}</td>
+                                    <td>{{ d.organ }}</td>
+                                    <td>{{ d.hospital.name|default:"Not Assigned" }}</td>
+                                    <td><span class="badge bg-success">Verified</span></td>
+                                    <td>
+                                        <a href="{% url 'hospital_verify_detail' 'donor' d.pk %}" class="btn btn-sm btn-outline-info">View Records</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">No registered organ donors in the database.</p>
+                    {% endif %}
+                </div>
+
+                <!-- RECEIVERS WAITLIST -->
+                <div class="tab-pane fade" id="receivers" role="tabpanel">
+                    <h3 class="h5 text-info mb-3 font-display border-bottom border-secondary pb-2">Global Recipients Waitlist</h3>
+                    {% if pending_receivers or verified_receivers %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Anonymous ID</th>
+                                    <th>Age</th>
+                                    <th>Blood</th>
+                                    <th>Organ</th>
+                                    <th>Designated Hospital</th>
+                                    <th>Urgency</th>
+                                    <th>Status</th>
+                                    <th>Audit View</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in pending_receivers %}
+                                <tr>
+                                    <td><strong>{{ r.anonymous_id }}</strong></td>
+                                    <td>{{ r.age }}</td>
+                                    <td>{{ r.blood_group }}</td>
+                                    <td>{{ r.organ }}</td>
+                                    <td>{{ r.hospital.name|default:"Not Assigned" }}</td>
+                                    <td><span class="badge bg-secondary">{{ r.get_medical_urgency_display }}</span></td>
+                                    <td><span class="badge bg-warning text-dark">Pending Audit</span></td>
+                                    <td>
+                                        <a href="{% url 'hospital_verify_detail' 'receiver' r.pk %}" class="btn btn-sm btn-outline-info">View Records</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% for r in verified_receivers %}
+                                <tr>
+                                    <td><strong>{{ r.anonymous_id }}</strong></td>
+                                    <td>{{ r.age }}</td>
+                                    <td>{{ r.blood_group }}</td>
+                                    <td>{{ r.organ }}</td>
+                                    <td>{{ r.hospital.name|default:"Not Assigned" }}</td>
+                                    <td><span class="badge bg-danger">{{ r.get_medical_urgency_display }}</span></td>
+                                    <td><span class="badge bg-success">Verified</span></td>
+                                    <td>
+                                        <a href="{% url 'hospital_verify_detail' 'receiver' r.pk %}" class="btn btn-sm btn-outline-info">View Records</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">No waiting organ recipients in the database.</p>
+                    {% endif %}
+                </div>
+
+                <!-- ALLOCATED MATCHES -->
+                <div class="tab-pane fade" id="matches" role="tabpanel">
+                    <h3 class="h5 text-info mb-3 font-display border-bottom border-secondary pb-2">Matches Ledger Registry</h3>
+                    {% if matches %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Match ID</th>
+                                    <th>Donor ID</th>
+                                    <th>Receiver ID</th>
+                                    <th>Organ</th>
+                                    <th>Score</th>
+                                    <th>Approved By</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for match in matches %}
+                                <tr>
+                                    <td>#OC-{{ match.id }}</td>
+                                    <td>{{ match.donor.anonymous_id }} ({{ match.donor.hospital.name }})</td>
+                                    <td>{{ match.receiver.anonymous_id }} ({{ match.receiver.hospital.name }})</td>
+                                    <td><strong>{{ match.donor.organ }}</strong></td>
+                                    <td><strong class="text-info">{{ match.compatibility_score }}%</strong></td>
+                                    <td>{{ match.verified_by.username }}</td>
+                                    <td>{{ match.matched_at|date:"Y-m-d H:i" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">No allocation matches completed yet.</p>
+                    {% endif %}
+                </div>
+
+                <!-- AUDIT LOGS -->
+                <div class="tab-pane fade" id="audits" role="tabpanel">
+                    <h3 class="h5 text-danger mb-3 font-display border-bottom border-secondary pb-2">Cryptographic Audit Chain</h3>
+                    {% if audit_logs %}
+                    <div class="bg-dark p-3 rounded border border-secondary font-monospace" style="font-size: 0.85rem; max-height: 400px; overflow-y: auto;">
+                        {% for log in audit_logs %}
+                        <div class="border-bottom border-secondary py-2">
+                            <span class="text-info">[{{ log.timestamp|date:"Y-m-d H:i:s" }}]</span>
+                            <span class="text-warning fw-bold">{{ log.action }}</span>
+                            by <span class="text-success">{{ log.actor.username|default:"System" }}</span>:
+                            <span class="text-light">{{ log.details }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">No audit transactions recorded.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==============================================
+     DONOR PORTAL
+     ============================================== -->
+{% elif role == 'DONOR' %}
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="glass-card mb-4">
+            <h2 class="font-display">Donor Status: 
+                {% if donor.status == 'PENDING' %}<span class="badge bg-warning text-dark">Pending Examination</span>
+                {% elif donor.status == 'VERIFIED' %}<span class="badge bg-success">Verified Pool</span>
+                {% elif donor.status == 'REJECTED' %}<span class="badge bg-danger">Rejected</span>
+                {% elif donor.status == 'MATCHED' %}<span class="badge bg-info text-dark">Match Approved</span>
+                {% endif %}
+            </h2>
+            <p class="text-muted small">Designated Verification Hospital: <strong>{{ donor.hospital.name|default:"Not assigned" }}</strong></p>
+            
+            <div class="d-flex justify-content-between align-items-center bg-dark p-3 rounded border border-secondary my-4">
+                <div class="progress-step completed text-center">
+                    <div class="progress-circle mx-auto">1</div>
+                    <span class="small text-muted d-block mt-2">Submit</span>
+                </div>
+                <div class="border-top border-secondary flex-grow-1 mx-2" style="height: 2px;"></div>
+                <div class="progress-step {% if donor.status != 'PENDING' %}completed{% else %}active{% endif %} text-center">
+                    <div class="progress-circle mx-auto">2</div>
+                    <span class="small text-muted d-block mt-2">Audit</span>
+                </div>
+                <div class="border-top border-secondary flex-grow-1 mx-2" style="height: 2px;"></div>
+                <div class="progress-step {% if donor.status == 'VERIFIED' %}active{% elif donor.status == 'MATCHED' %}completed{% endif %} text-center">
+                    <div class="progress-circle mx-auto">3</div>
+                    <span class="small text-muted d-block mt-2">Matching</span>
+                </div>
+                <div class="border-top border-secondary flex-grow-1 mx-2" style="height: 2px;"></div>
+                <div class="progress-step {% if donor.status == 'MATCHED' %}active{% endif %} text-center">
+                    <div class="progress-circle mx-auto">4</div>
+                    <span class="small text-muted d-block mt-2">Matched</span>
+                </div>
+            </div>
+
+            <div class="row pt-3">
+                <div class="col-md-3 col-6 mb-3">
+                    <span class="text-muted small d-block">Organ Offered:</span>
+                    <strong class="text-info fs-5">{{ donor.organ }}</strong>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <span class="text-muted small d-block">Blood Group:</span>
+                    <strong class="text-info fs-5">{{ donor.blood_group }}</strong>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <span class="text-muted small d-block">Tissue Type HLA:</span>
+                    <strong class="text-light fs-6">{{ donor.hla_typing|default:"Pending Lab" }}</strong>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <span class="text-muted small d-block">Metrics:</span>
+                    <strong class="text-light fs-6">{{ donor.weight }}kg | {{ donor.bp }}</strong>
+                </div>
+            </div>
+
+            {% if donor.status == 'MATCHED' and matches %}
+            <div class="alert alert-success mt-4">
+                <h5 class="alert-heading">🎉 Allocation Match Finalized</h5>
+                {% for match in matches %}
+                <p class="mb-1"><strong>Receiver ID:</strong> {{ match.receiver.anonymous_id }}</p>
+                <p class="mb-1"><strong>Organ:</strong> {{ match.receiver.organ }}</p>
+                <p class="mb-1"><strong>Compatibility Score:</strong> {{ match.compatibility_score }}%</p>
+                <hr class="border-success">
+                <p class="mb-0 small font-monospace">{{ match.matching_rationale }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="glass-card shadow-sm p-3">
+            <h5 class="font-display text-info mb-2">📍 Hospital Proximity Map</h5>
+            <p class="text-muted small">Route to designated Government General Hospital.</p>
+            <div id="dashboard-map" class="map-wrapper" style="height: 250px;"></div>
+            <div id="distance-info" class="text-white small fw-bold">Calculating distance...</div>
+        </div>
+    </div>
+</div>
+
+<!-- ==============================================
+     RECEIVER PORTAL
+     ============================================== -->
+{% elif role == 'RECEIVER' %}
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="glass-card mb-4">
+            <h2 class="font-display">Receiver Status: 
+                {% if receiver.status == 'PENDING' %}<span class="badge bg-warning text-dark">Pending Verification</span>
+                {% elif receiver.status == 'VERIFIED' %}<span class="badge bg-success">Verified (Waitlist)</span>
+                {% elif receiver.status == 'REJECTED' %}<span class="badge bg-danger">Rejected</span>
+                {% elif receiver.status == 'MATCHED' %}<span class="badge bg-info text-dark">Match Approved</span>
+                {% endif %}
+            </h2>
+            <p class="text-muted small">Designated Verification Hospital: <strong>{{ receiver.hospital.name|default:"Not assigned" }}</strong></p>
+
+            <div class="d-flex justify-content-between align-items-center bg-dark p-3 rounded border border-secondary my-4">
+                <div class="progress-step completed text-center">
+                    <div class="progress-circle mx-auto">1</div>
+                    <span class="small text-muted d-block mt-2">Submit</span>
+                </div>
+                <div class="border-top border-secondary flex-grow-1 mx-2" style="height: 2px;"></div>
+                <div class="progress-step {% if receiver.status != 'PENDING' %}completed{% else %}active{% endif %} text-center">
+                    <div class="progress-circle mx-auto">2</div>
+                    <span class="small text-muted d-block mt-2">Audit</span>
+                </div>
+                <div class="border-top border-secondary flex-grow-1 mx-2" style="height: 2px;"></div>
+                <div class="progress-step {% if receiver.status == 'VERIFIED' %}active{% elif receiver.status == 'MATCHED' %}completed{% endif %} text-center">
+                    <div class="progress-circle mx-auto">3</div>
+                    <span class="small text-muted d-block mt-2">Waitlist</span>
+                </div>
+                <div class="border-top border-secondary flex-grow-1 mx-2" style="height: 2px;"></div>
+                <div class="progress-step {% if receiver.status == 'MATCHED' %}active{% endif %} text-center">
+                    <div class="progress-circle mx-auto">4</div>
+                    <span class="small text-muted d-block mt-2">Matched</span>
+                </div>
+            </div>
+
+            <div class="row pt-3">
+                <div class="col-md-3 col-6 mb-3">
+                    <span class="text-muted small d-block">Organ Required:</span>
+                    <strong class="text-info fs-5">{{ receiver.organ }}</strong>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <span class="text-muted small d-block">Blood Group:</span>
+                    <strong class="text-info fs-5">{{ receiver.blood_group }}</strong>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <span class="text-muted small d-block">Urgency Level:</span>
+                    <strong class="text-warning fs-5">{{ receiver.get_medical_urgency_display }}</strong>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <span class="text-muted small d-block">HLA Tissue Type:</span>
+                    <strong class="text-light fs-6">{{ receiver.hla_typing|default:"Pending Lab" }}</strong>
+                </div>
+            </div>
+
+            {% if receiver.status == 'MATCHED' and matches %}
+            <div class="alert alert-success mt-4">
+                <h5 class="alert-heading">🎉 Allocation Match Finalized</h5>
+                {% for match in matches %}
+                <p class="mb-1"><strong>Donor ID:</strong> {{ match.donor.anonymous_id }}</p>
+                <p class="mb-1"><strong>Organ:</strong> {{ match.donor.organ }}</p>
+                <p class="mb-1"><strong>Compatibility Score:</strong> {{ match.compatibility_score }}%</p>
+                <hr class="border-success">
+                <p class="mb-0 small font-monospace">{{ match.matching_rationale }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="glass-card shadow-sm p-3">
+            <h5 class="font-display text-info mb-2">📍 Hospital Proximity Map</h5>
+            <p class="text-muted small">Route to designated Government General Hospital.</p>
+            <div id="dashboard-map" class="map-wrapper" style="height: 250px;"></div>
+            <div id="distance-info" class="text-white small fw-bold">Calculating distance...</div>
+        </div>
+    </div>
+</div>
+
+<!-- ==============================================
+     GOVERNMENT HOSPITAL PORTAL
+     ============================================== -->
+{% elif role == 'HOSPITAL' %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="glass-card border-info">
+            <h2 class="text-info font-display mb-1">{{ hospital.name }}</h2>
+            <p class="text-muted mb-0">Government Approved Verification Node | Registration: <code>{{ hospital.registration_number }}</code></p>
+            {% if hospital.authorized_hospitals.all %}
+                <div class="mt-2 text-warning small">
+                    🔐 Authorized to access cross-hospital pools: 
+                    {% for auth_h in hospital.authorized_hospitals.all %}
+                        <span class="badge bg-secondary font-monospace">{{ auth_h.name }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="glass-card">
+            <!-- Hospital Navigation Tabs -->
+            <ul class="nav nav-tabs nav-tabs-custom mb-4" id="hospitalTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link nav-link-custom active" id="h-pending-tab" data-bs-toggle="tab" data-bs-target="#h-pending" type="button" role="tab">
+                        Pending Audits
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link nav-link-custom" id="h-active-tab" data-bs-toggle="tab" data-bs-target="#h-active" type="button" role="tab">
+                        Active Pool Directory
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link nav-link-custom" id="h-matches-tab" data-bs-toggle="tab" data-bs-target="#h-matches" type="button" role="tab">
+                        Approved Allocations
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link nav-link-custom" id="h-audits-tab" data-bs-toggle="tab" data-bs-target="#h-audits" type="button" role="tab">
+                        Security Logs
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="hospitalTabsContent">
+                <!-- PENDING AUDITS -->
+                <div class="tab-pane fade show active" id="h-pending" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <h4 class="text-primary font-display h6 mb-3 border-bottom border-secondary pb-2">Pending Donors Verification</h4>
+                            {% if pending_donors %}
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Anonymous ID</th>
+                                            <th>Organ</th>
+                                            <th>Blood</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for donor in pending_donors %}
+                                        <tr>
+                                            <td><strong>{{ donor.anonymous_id }}</strong></td>
+                                            <td>{{ donor.organ }}</td>
+                                            <td>{{ donor.blood_group }}</td>
+                                            <td>
+                                                <a href="{% url 'hospital_verify_detail' 'donor' donor.pk %}" class="btn btn-outline-primary btn-sm px-3">Audit Details</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted small">No pending donors assigned to this hospital pool.</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <h4 class="text-warning font-display h6 mb-3 border-bottom border-secondary pb-2">Pending Recipients Verification</h4>
+                            {% if pending_receivers %}
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Anonymous ID</th>
+                                            <th>Organ</th>
+                                            <th>Blood</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for rec in pending_receivers %}
+                                        <tr>
+                                            <td><strong>{{ rec.anonymous_id }}</strong></td>
+                                            <td>{{ rec.organ }}</td>
+                                            <td>{{ rec.blood_group }}</td>
+                                            <td>
+                                                <a href="{% url 'hospital_verify_detail' 'receiver' rec.pk %}" class="btn btn-outline-warning btn-sm px-3">Audit Details</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted small">No pending recipients assigned to this hospital pool.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACTIVE DIRECTORY -->
+                <div class="tab-pane fade" id="h-active" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <h4 class="text-success font-display h6 mb-3 border-bottom border-secondary pb-2">Active Donors</h4>
+                            {% if verified_donors %}
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Organ</th>
+                                            <th>Blood</th>
+                                            <th>HLA</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for d in verified_donors %}
+                                        <tr>
+                                            <td><code>{{ d.anonymous_id }}</code></td>
+                                            <td>{{ d.organ }}</td>
+                                            <td>{{ d.blood_group }}</td>
+                                            <td><code>{{ d.hla_typing }}</code></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted small">No active verified donors in local pool.</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <h4 class="text-success font-display h6 mb-3 border-bottom border-secondary pb-2">Active Recipients</h4>
+                            {% if verified_receivers %}
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Organ</th>
+                                            <th>Blood</th>
+                                            <th>Urgency</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for r in verified_receivers %}
+                                        <tr>
+                                            <td><code>{{ r.anonymous_id }}</code></td>
+                                            <td>{{ r.organ }}</td>
+                                            <td>{{ r.blood_group }}</td>
+                                            <td><span class="badge bg-danger">{{ r.get_medical_urgency_display }}</span></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted small">No active waiting recipients in local pool.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- APPROVED ALLOCATIONS -->
+                <div class="tab-pane fade" id="h-matches" role="tabpanel">
+                    <h4 class="text-info font-display h6 mb-3 border-bottom border-secondary pb-2">Match Registry Ledger</h4>
+                    {% if matches %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Match ID</th>
+                                    <th>Donor ID</th>
+                                    <th>Receiver ID</th>
+                                    <th>Organ</th>
+                                    <th>Compatibility</th>
+                                    <th>Sign-Off</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for match in matches %}
+                                <tr>
+                                    <td>#OC-{{ match.id }}</td>
+                                    <td>{{ match.donor.anonymous_id }}</td>
+                                    <td>{{ match.receiver.anonymous_id }}</td>
+                                    <td><strong>{{ match.donor.organ }}</strong></td>
+                                    <td><strong class="text-info">{{ match.compatibility_score }}%</strong></td>
+                                    <td>{{ match.verified_by.username }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-3">No matched allocation records found.</p>
+                    {% endif %}
+                </div>
+
+                <!-- AUDIT LOGS -->
+                <div class="tab-pane fade" id="h-audits" role="tabpanel">
+                    <h4 class="text-danger font-display h6 mb-3 border-bottom border-secondary pb-2">Audit Registry Transactions</h4>
+                    {% if audit_logs %}
+                    <div class="bg-dark p-3 rounded border border-secondary font-monospace" style="font-size: 0.85rem; max-height: 300px; overflow-y: auto;">
+                        {% for log in audit_logs %}
+                        <div class="border-bottom border-secondary py-1">
+                            <span class="text-info">[{{ log.timestamp|date:"Y-m-d H:i:s" }}]</span>
+                            <span class="text-warning fw-bold">{{ log.action }}</span>:
+                            <span class="text-light">{{ log.details }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-3">No transactions logged.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+{% if role == 'DONOR' or role == 'RECEIVER' %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var hospitalLat = 12.9716;
+        var hospitalLng = 77.5946;
+        
+        {% if role == 'DONOR' %}
+            var userLat = {{ donor.user.profile.latitude|default:"null" }};
+            var userLng = {{ donor.user.profile.longitude|default:"null" }};
+            var userName = "Donor Profile";
+        {% elif role == 'RECEIVER' %}
+            var userLat = {{ receiver.user.profile.latitude|default:"null" }};
+            var userLng = {{ receiver.user.profile.longitude|default:"null" }};
+            var userName = "Receiver Profile";
+        {% endif %}
+        
+        var distDiv = document.getElementById("distance-info");
+        
+        if (userLat && userLng) {
+            var map = L.map('dashboard-map').setView([userLat, userLng], 10);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+            
+            L.marker([userLat, userLng]).addTo(map).bindPopup(userName).openPopup();
+            L.marker([hospitalLat, hospitalLng]).addTo(map).bindPopup("Government General Hospital");
+            
+            var route = L.polyline([
+                [userLat, userLng],
+                [hospitalLat, hospitalLng]
+            ], {color: '#06b6d4', weight: 4, opacity: 0.8, dashArray: '5, 10'}).addTo(map);
+            
+            map.fitBounds(route.getBounds(), {padding: [50, 50]});
+            
+            var distance = (map.distance([userLat, userLng], [hospitalLat, hospitalLng]) / 1000).toFixed(1);
+            distDiv.innerHTML = "📍 Distance: " + distance + " km to verification site";
+        } else {
+            distDiv.innerHTML = "⚠️ Coordinates not fully registered.";
+            document.getElementById("dashboard-map").style.display = "none";
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

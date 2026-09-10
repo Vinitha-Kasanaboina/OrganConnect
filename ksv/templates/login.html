@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if selected_role == 'donor' %}Donor Login – Organ Connect
+{% elif selected_role == 'receiver' %}Receiver Login – Organ Connect
+{% elif selected_role == 'admin' %}System Admin Login – Organ Connect
+{% elif selected_role == 'hospital' %}Government Hospital Login – Organ Connect
+{% else %}Login – Organ Connect{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        max-width: 480px;
+        margin: 3rem auto;
+    }
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .auth-header h2 {
+        font-size: 2rem;
+        font-family: var(--font-display);
+        background: linear-gradient(135deg, #06b6d4, #10b981);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+    .signup-link {
+        text-align: center;
+        margin-top: 1.5rem;
+        font-size: 0.9rem;
+        color: #94a3b8;
+    }
+    .signup-link a {
+        color: #06b6d4;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .signup-link a:hover {
+        color: #10b981;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="glass-card">
+        <div class="auth-header">
+            {% if selected_role == 'donor' %}
+                <div class="fs-1 mb-2">🫀</div>
+                <h2>Donor Portal Login</h2>
+                <p class="text-muted">Sign in to your donor account or manage pledged details</p>
+            {% elif selected_role == 'receiver' %}
+                <div class="fs-1 mb-2">🏥</div>
+                <h2>Receiver Portal Login</h2>
+                <p class="text-muted">Sign in to your recipient waitlist account</p>
+            {% elif selected_role == 'admin' %}
+                <div class="fs-1 mb-2">👨‍💼</div>
+                <h2>System Admin Login</h2>
+                <p class="text-muted">Sign in to the System Administration Console</p>
+            {% elif selected_role == 'hospital' %}
+                <div class="fs-1 mb-2">🏛️</div>
+                <h2>Government Hospital Login</h2>
+                <p class="text-muted">Sign in to your accredited clinical officer portal</p>
+            {% else %}
+                <div class="fs-1 mb-2">🔐</div>
+                <h2>Welcome Back</h2>
+                <p class="text-muted">Access the Organ Connect Secure System</p>
+            {% endif %}
+        </div>
+        
+        <form method="POST">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label" for="username">Username</label>
+                <input class="form-control" type="text" id="username" name="username" required placeholder="Enter username">
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label" for="password">Password</label>
+                <input class="form-control" type="password" id="password" name="password" required placeholder="Enter password">
+            </div>
+            
+            <button type="submit" class="btn btn-custom-primary w-100 py-3 fs-6">Login Securely →</button>
+        </form>
+        
+        <div class="signup-link">
+            {% if selected_role == 'donor' or selected_role == 'receiver' %}
+                Don't have an account? <a href="{% url 'register' %}">Register as Donor / Receiver</a>
+            {% elif selected_role == 'hospital' %}
+                Need hospital accreditation? <a href="{% url 'register_hospital' %}">Submit Hospital Sign-Up Request</a>
+            {% elif selected_role == 'admin' %}
+                <span class="text-muted small">System Admin accounts use the Master Admin Security Console.</span> <a href="{% url 'admin_login' %}">Go to Admin Portal →</a>
+            {% else %}
+                Don't have an account? <a href="{% url 'register' %}">Create Patient Account</a> | <a href="{% url 'register_hospital' %}">Hospital Registration</a>
+            {% endif %}
+            <div class="mt-2 border-top pt-2">
+                <span class="small text-muted">Master Administrator?</span> <a href="{% url 'admin_login' %}" class="small">Go to Admin Security Console →</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

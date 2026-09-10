@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Matched Organs - Organ Connect{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        border-bottom: 1px solid var(--bg-card-border);
+        padding-bottom: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .page-title {
+        font-size: 2.25rem;
+        background: linear-gradient(135deg, #0284c7, #059669);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-family: var(--font-display);
+        font-weight: 800;
+    }
+    .matched-badge {
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: #ffffff;
+        font-weight: 700;
+        padding: 0.35rem 0.85rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        display: inline-block;
+        box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+    }
+    .score-badge {
+        background-color: #0284c7;
+        color: #ffffff;
+        font-weight: 700;
+        padding: 0.25rem 0.6rem;
+        border-radius: 0.5rem;
+        font-size: 0.85rem;
+    }
+    .empty-state-card {
+        background: #ffffff;
+        border: 2px dashed #cbd5e1;
+        border-radius: 1rem;
+        padding: 4rem 2rem;
+        text-align: center;
+        margin: 2rem 0;
+    }
+    .empty-state-icon {
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+        color: #94a3b8;
+    }
+    .empty-state-title {
+        font-family: var(--font-display);
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+            <h1 class="page-title mb-1">🔗 Matched Organs</h1>
+            <p class="text-muted mb-0">Automatic real-time compatibility engine results comparing registered organ donors & recipients.</p>
+        </div>
+        <div>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary px-3">
+                ⬅️ Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    {% if matched_pairs %}
+        <div class="glass-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="font-display mb-0">Active Compatible Organ Pairs ({{ matched_pairs|length }})</h4>
+                <span class="badge bg-success px-3 py-2">Auto-Matching Active</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Donor Name</th>
+                            <th>Receiver Name</th>
+                            <th>Organ Type</th>
+                            <th>Blood Group (Donor → Receiver)</th>
+                            <th>Hospital</th>
+                            <th>Compatibility Score</th>
+                            <th>Match Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pair in matched_pairs %}
+                        <tr>
+                            <td class="fw-bold text-muted">{{ forloop.counter }}</td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ pair.donor_name }}</div>
+                                <small class="text-muted font-monospace">{{ pair.donor_id }}</small>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ pair.receiver_name }}</div>
+                                <small class="text-muted font-monospace">{{ pair.receiver_id }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary px-2 py-1 fs-6">{{ pair.organ_type }}</span>
+                            </td>
+                            <td>
+                                <span class="fw-semibold text-dark">{{ pair.blood_group }}</span>
+                            </td>
+                            <td>
+                                {% if pair.hospital != "Unassigned" %}
+                                    <span class="text-dark">🏢 {{ pair.hospital }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Unassigned</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="score-badge">{{ pair.score }}%</span>
+                            </td>
+                            <td>
+                                <span class="matched-badge">Matched</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state-card">
+            <div class="empty-state-icon">🩺</div>
+            <div class="empty-state-title">No Matching Organ Available</div>
+            <p class="text-muted max-w-lg mx-auto mb-4">
+                The automatic matching system scanned all active donor and receiver records, but no compatible Organ Type and Blood Group match is currently available.
+            </p>
+            <a href="{% url 'dashboard' %}" class="btn btn-custom-primary px-4 py-2">
+                Return to Dashboard
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

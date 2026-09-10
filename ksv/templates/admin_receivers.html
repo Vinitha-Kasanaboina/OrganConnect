@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Receiver Verification Requests - Admin Console{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="font-display mb-1 text-dark">🫀 Organ Recipient Waitlist & Verification Requests</h1>
+        <p class="text-muted mb-0">Global overview of recipient applications, uploaded medical diagnosis reports, medical urgency tiers, and hospital audit statuses.</p>
+    </div>
+    <div>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">← Return to Dashboard</a>
+    </div>
+</div>
+
+<div class="glass-card p-4 mb-4">
+    <h3 class="h5 text-dark mb-3 font-display border-bottom pb-2">⏳ Pending Recipient Verification Requests ({{ pending_receivers.count }})</h3>
+    {% if pending_receivers %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Anonymous ID</th>
+                    <th>Basic Details</th>
+                    <th>Blood</th>
+                    <th>Organ Needed</th>
+                    <th>Urgency Tiers</th>
+                    <th>Contact Info</th>
+                    <th>Assigned Hospital</th>
+                    <th>Uploaded Docs</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in pending_receivers %}
+                <tr>
+                    <td><strong class="text-primary">{{ r.anonymous_id }}</strong></td>
+                    <td>{{ r.name }} ({{ r.age }} y/o, {{ r.gender }})</td>
+                    <td><span class="badge bg-danger text-white">{{ r.blood_group }}</span></td>
+                    <td><strong class="text-dark">{{ r.organ }}</strong></td>
+                    <td><span class="badge bg-warning text-dark">{{ r.get_medical_urgency_display }}</span></td>
+                    <td>{{ r.contact_info|default:"Not Provided" }}</td>
+                    <td>{{ r.hospital.name|default:"Unassigned" }}</td>
+                    <td><span class="badge bg-info text-dark">{{ r.documents.count }} Document(s)</span></td>
+                    <td><span class="badge bg-warning text-dark">Pending Review</span></td>
+                    <td>
+                        <a href="{% url 'hospital_verify_detail' 'receiver' r.pk %}" class="btn btn-sm btn-outline-primary">Inspect Records & Docs</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted text-center py-3 mb-0">No pending receiver verification requests in the database.</p>
+    {% endif %}
+</div>
+
+<div class="glass-card p-4">
+    <h3 class="h5 text-dark mb-3 font-display border-bottom pb-2">✅ Verified & Approved Recipients Waitlist</h3>
+    {% if verified_receivers %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Anonymous ID</th>
+                    <th>Basic Details</th>
+                    <th>Blood</th>
+                    <th>Organ Needed</th>
+                    <th>Urgency Tier</th>
+                    <th>HLA Typing</th>
+                    <th>Designated Hospital</th>
+                    <th>Verification Remarks</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in verified_receivers %}
+                <tr>
+                    <td><strong class="text-primary">{{ r.anonymous_id }}</strong></td>
+                    <td>{{ r.name }} ({{ r.age }} y/o, {{ r.gender }})</td>
+                    <td><span class="badge bg-danger text-white">{{ r.blood_group }}</span></td>
+                    <td><strong class="text-dark">{{ r.organ }}</strong></td>
+                    <td>
+                        {% if r.medical_urgency == 'CRITICAL' %}
+                            <span class="badge bg-danger text-white">CRITICAL</span>
+                        {% elif r.medical_urgency == 'HIGH' %}
+                            <span class="badge bg-warning text-dark">HIGH</span>
+                        {% else %}
+                            <span class="badge bg-info text-dark">{{ r.get_medical_urgency_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td><code>{{ r.hla_typing|default:"N/A" }}</code></td>
+                    <td>{{ r.hospital.name|default:"Unassigned" }}</td>
+                    <td><span class="small text-muted">{{ r.verification_remarks|default:"No remarks" }}</span></td>
+                    <td>
+                        <a href="{% url 'hospital_verify_detail' 'receiver' r.pk %}" class="btn btn-sm btn-outline-primary">Inspect Records & Docs</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted text-center py-3 mb-0">No approved organ recipients on the active waitlist.</p>
+    {% endif %}
+</div>
+{% endblock %}

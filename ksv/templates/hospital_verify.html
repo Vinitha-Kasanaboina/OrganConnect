@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Applicant Profile - Organ Connect{% endblock %}
+
+{% block extra_css %}
+<style>
+    .verify-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    
+    @media (min-width: 900px) {
+        .verify-grid {
+            grid-template-columns: 3fr 2fr;
+        }
+    }
+    
+    .verify-header {
+        margin-bottom: 2rem;
+        border-bottom: 1px solid var(--bg-card-border);
+        padding-bottom: 1rem;
+    }
+    
+    .records-box {
+        background: rgba(15, 23, 42, 0.7);
+        border: 1px dashed rgba(6, 182, 212, 0.4);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        color: var(--text-main);
+        font-family: var(--font-sans);
+        margin: 1.5rem 0;
+        white-space: pre-wrap;
+    }
+    
+    .btn-action-verify {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem;
+        border: none;
+        font-family: var(--font-display);
+        font-weight: 700;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+    }
+    
+    .btn-approve {
+        background: var(--success);
+        color: #0f172a;
+    }
+    
+    .btn-approve:hover {
+        background: #059669;
+        transform: translateY(-2px);
+    }
+    
+    .btn-reject {
+        background: var(--danger);
+        color: var(--text-main);
+    }
+    
+    .btn-reject:hover {
+        background: #e11d48;
+        transform: translateY(-2px);
+    }
+    
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    .detail-label {
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+    
+    .detail-value {
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="verify-header">
+    <a href="{% url 'dashboard' %}" class="nav-link" style="margin-bottom: 1rem; display: inline-block;">⬅️ Back to Hospital Dashboard</a>
+    <h1>Government Hospital Review Board</h1>
+    <p>Perform medical examination audit for case <strong>{{ applicant.anonymous_id }}</strong>. Ensure records are genuine.</p>
+</div>
+
+<div class="verify-grid">
+    <div>
+        <div class="glass-card">
+            <h3 style="font-family: var(--font-display); color: var(--primary); margin-bottom: 1.5rem;">🔒 Decrypted Secure Medical Dossier</h3>
+            
+            <div class="detail-row">
+                <span class="detail-label">Anonymous Case ID</span>
+                <span class="detail-value" style="color: var(--primary);">{{ applicant.anonymous_id }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Full Name & Demographics</span>
+                <span class="detail-value">{{ applicant.name }} ({{ applicant.age }} y/o, {{ applicant.gender }})</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Contact Information</span>
+                <span class="detail-value">{{ applicant.contact_info|default:"Not Provided" }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Organ Profile</span>
+                <span class="detail-value" style="color: var(--primary);">{{ applicant.organ }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Blood Group</span>
+                <span class="detail-value" style="color: var(--secondary);">{{ applicant.blood_group }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Physical Stats</span>
+                <span class="detail-value">{{ applicant.weight }} kg | Blood Pressure: {{ applicant.bp }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">HLA Tissue Type Code</span>
+                <span class="detail-value"><code>{{ applicant.hla_typing|default:"Not Available" }}</code></span>
+            </div>
+
+            <!-- UPLOADED MEDICAL DOCUMENTS SECTION -->
+            <h4 style="margin-top: 2rem; margin-bottom: 0.75rem; font-family: var(--font-display);" class="text-info">📎 Uploaded Medical Reports & Certificates</h4>
+            {% if documents %}
+            <div class="table-responsive my-3">
+                <table class="table table-dark table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Document Type</th>
+                            <th>Filename / Title</th>
+                            <th>Uploaded At</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doc in documents %}
+                        <tr>
+                            <td><strong>{{ doc.get_document_type_display }}</strong></td>
+                            <td>{{ doc.title|default:"Medical Document" }}</td>
+                            <td><span class="small text-muted">{{ doc.uploaded_at|date:"Y-m-d H:i" }}</span></td>
+                            <td>
+                                <a href="{% url 'download_medical_document' doc.pk %}" target="_blank" class="btn btn-sm btn-outline-info">
+                                    📥 Download / View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-secondary my-3 small" role="alert">
+                ⚠️ No medical files uploaded for this profile.
+            </div>
+            {% endif %}
+
+            <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem; font-family: var(--font-display);">Patient Diagnostic Notes / Summary</h4>
+            <div class="records-box">
+                {{ decrypted_records|default:"No additional health notes entered." }}
+            </div>
+            
+            <p style="font-size: 0.75rem; color: var(--text-muted);">🛡️ Secure verification: Uploaded medical documents and diagnostic history are protected under access control policies. Only authorized hospital officers and system admins can view these files.</p>
+        </div>
+    </div>
+
+    
+    <div>
+        <!-- Map and Verification decision -->
+        <div class="glass-card" style="margin-bottom: 2rem; padding: 1.5rem;">
+            <h3 style="font-family: var(--font-display); margin-bottom: 1rem;">📍 Geographic Route & Distance</h3>
+            <div id="verify-map" class="map-wrapper" style="height: 220px;"></div>
+            <div id="verify-distance" style="font-size: 0.95rem; font-weight: 600; margin-top: 0.75rem;">
+                Calculating distance...
+            </div>
+        </div>
+        
+        <div class="glass-card" style="padding: 1.5rem;">
+            <h3 style="font-family: var(--font-display); margin-bottom: 1.25rem;">📝 Verification Determination</h3>
+            
+            <form method="POST">
+                {% csrf_token %}
+                
+                {% if user_type == 'receiver' %}
+                <div class="form-group">
+                    <label class="form-label" for="urgency">Adjust Medical Urgency Priority</label>
+                    <select name="urgency" id="urgency">
+                        <option value="LOW" {% if applicant.medical_urgency == 'LOW' %}selected{% endif %}>Low Urgency</option>
+                        <option value="MEDIUM" {% if applicant.medical_urgency == 'MEDIUM' %}selected{% endif %}>Medium Urgency</option>
+                        <option value="HIGH" {% if applicant.medical_urgency == 'HIGH' %}selected{% endif %}>High Urgency</option>
+                        <option value="CRITICAL" {% if applicant.medical_urgency == 'CRITICAL' %}selected{% endif %}>Critical Urgency</option>
+                    </select>
+                </div>
+                {% endif %}
+                
+                <div class="form-group">
+                    <label class="form-label" for="notes">Auditor Verification & Decision Notes</label>
+                    <textarea class="form-input" name="notes" id="notes" rows="4" required placeholder="Describe test validity, physical state, check legitimacy, reasons for decision..."></textarea>
+                </div>
+                
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" name="action" value="approve" class="btn-action-verify btn-approve" style="flex: 1;">Approve / Verify</button>
+                    <button type="submit" name="action" value="reject" class="btn-action-verify btn-reject" style="flex: 1;">Reject</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var hospitalLat = 12.9716;
+        var hospitalLng = 77.5946;
+        
+        var userLat = {{ applicant.user.profile.latitude|default:"null" }};
+        var userLng = {{ applicant.user.profile.longitude|default:"null" }};
+        var userName = "{{ applicant.name|escapejs }}";
+        
+        var distDiv = document.getElementById("verify-distance");
+        
+        if (userLat && userLng) {
+            var map = L.map('verify-map').setView([userLat, userLng], 10);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+            
+            var userMarker = L.marker([userLat, userLng]).addTo(map)
+                .bindPopup("<b>" + userName + "</b><br>Home Coordinates").openPopup();
+                
+            var hospitalMarker = L.marker([hospitalLat, hospitalLng]).addTo(map)
+                .bindPopup("<b>Government General Hospital</b>");
+                
+            var route = L.polyline([
+                [userLat, userLng],
+                [hospitalLat, hospitalLng]
+            ], {color: '#6366f1', weight: 4, opacity: 0.8, dashArray: '5, 10'}).addTo(map);
+            
+            map.fitBounds(route.getBounds(), {padding: [30, 30]});
+            
+            var distance = (map.distance([userLat, userLng], [hospitalLat, hospitalLng]) / 1000).toFixed(1);
+            distDiv.innerHTML = "📍 Distance to Hospital: <strong style='color: var(--primary);'>" + distance + " km</strong>";
+        } else {
+            distDiv.innerHTML = "⚠️ Coordinate location details missing. Map unavailable.";
+            document.getElementById("verify-map").style.display = "none";
+        }
+    });
+</script>
+{% endblock %}

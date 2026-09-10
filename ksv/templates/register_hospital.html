@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Government Hospital Sign-Up - Organ Connect{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="glass-card shadow">
+            <h2 class="text-center mb-4 text-info font-display">Government Hospital Sign-Up</h2>
+            <p class="text-muted text-center mb-4">Request authorization to verify and manage organ donation matching in the national network.</p>
+            
+            <form method="POST">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <h5 class="border-bottom border-secondary pb-2 mb-3 text-secondary">Hospital Profile Information</h5>
+                <div class="mb-3">
+                    <label class="form-label text-light" for="{{ form.name.id_for_label }}">Hospital Name</label>
+                    {{ form.name }}
+                    {{ form.name.errors }}
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-light" for="{{ form.registration_number.id_for_label }}">Government Registration Number</label>
+                    {{ form.registration_number }}
+                    {{ form.registration_number.errors }}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-light" for="{{ form.address.id_for_label }}">Hospital Location Address</label>
+                    {{ form.address }}
+                    {{ form.address.errors }}
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-light" for="{{ form.contact_info.id_for_label }}">Official Contact Info</label>
+                        {{ form.contact_info }}
+                        {{ form.contact_info.errors }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-light" for="{{ form.authorized_officer.id_for_label }}">Authorized Officer</label>
+                        {{ form.authorized_officer }}
+                        {{ form.authorized_officer.errors }}
+                    </div>
+                </div>
+
+                <h5 class="border-bottom border-secondary pb-2 mt-4 mb-3 text-secondary">Authorized Login Credentials</h5>
+                
+                <div class="mb-3">
+                    <label class="form-label text-light" for="{{ form.username.id_for_label }}">Desired Username</label>
+                    {{ form.username }}
+                    {{ form.username.errors }}
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-light" for="{{ form.email.id_for_label }}">Official Email Address</label>
+                    {{ form.email }}
+                    {{ form.email.errors }}
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-light" for="{{ form.password.id_for_label }}">Password</label>
+                        {{ form.password }}
+                        {{ form.password.errors }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-light" for="{{ form.confirm_password.id_for_label }}">Confirm Password</label>
+                        {{ form.confirm_password }}
+                        {{ form.confirm_password.errors }}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-info w-100 py-2 mt-4 font-display font-weight-bold text-dark">Submit Registration Request</button>
+            </form>
+            
+            <p class="text-center mt-3 text-muted small">Already registered? <a href="{% url 'login' %}" class="text-info text-decoration-none">Sign in here</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

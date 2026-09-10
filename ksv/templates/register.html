@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Register Account - Organ Connect{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        max-width: 600px;
+        margin: 2rem auto;
+    }
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .auth-header h2 {
+        font-size: 2rem;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+    .auth-header p {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+    .login-link {
+        text-align: center;
+        margin-top: 1.5rem;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+    .login-link a {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 600;
+        transition: var(--transition-smooth);
+    }
+    .login-link a:hover {
+        color: var(--secondary);
+    }
+    .map-instruction {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="glass-card">
+        <div class="auth-header">
+            <h2>Create Account</h2>
+            <p>Register as a Donor, Receiver, or Hospital Official</p>
+        </div>
+        
+        <form method="POST" id="signup-form">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="alert alert-error">
+                {% for error in form.non_field_errors %}
+                <span>{{ error }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.username.id_for_label }}">Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <span style="color: var(--danger); font-size: 0.8rem;">{{ form.username.errors }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.email.id_for_label }}">Email Address</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <span style="color: var(--danger); font-size: 0.8rem;">{{ form.email.errors }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.password.id_for_label }}">Password</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <span style="color: var(--danger); font-size: 0.8rem;">{{ form.password.errors }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.confirm_password.id_for_label }}">Confirm Password</label>
+                {{ form.confirm_password }}
+                {% if form.confirm_password.errors %}
+                    <span style="color: var(--danger); font-size: 0.8rem;">{{ form.confirm_password.errors }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.role.id_for_label }}">I am registering as a:</label>
+                {{ form.role }}
+            </div>
+            
+            <div class="form-group" id="location-section">
+                <label class="form-label">Geographic Location Verification</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label class="form-label" for="{{ form.city.id_for_label }}">City</label>
+                        {{ form.city }}
+                    </div>
+                    <div>
+                        <label class="form-label" for="{{ form.state.id_for_label }}">State</label>
+                        {{ form.state }}
+                    </div>
+                </div>
+                
+                {{ form.latitude }}
+                {{ form.longitude }}
+                
+                <label class="form-label">Select Your Precise Location on Map</label>
+                <div id="map-picker" class="map-wrapper"></div>
+                <p class="map-instruction">ℹ️ Click anywhere on the map to set your location pin. The system will use this to calculate distance to the nearest Government Hospital.</p>
+            </div>
+            
+            <button type="submit" class="btn-submit">Register Profile</button>
+        </form>
+        
+        <div class="login-link">
+            Already have an account? <a href="{% url 'login' %}">Login here</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Initialize Map
+        // Central Coordinates default: Bangalore, India (12.9716, 77.5946)
+        var defaultLat = 12.9716;
+        var defaultLng = 77.5946;
+        
+        var map = L.map('map-picker').setView([defaultLat, defaultLng], 12);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+        
+        var marker;
+        
+        // Listen to map clicks
+        map.on('click', function(e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+            
+            document.getElementById("id_latitude").value = lat;
+            document.getElementById("id_longitude").value = lng;
+            
+            if (marker) {
+                marker.setLatLng(e.latlng);
+            } else {
+                marker = L.marker(e.latlng, {draggable: true}).addTo(map);
+                marker.on('dragend', function(event) {
+                    var m = event.target;
+                    var pos = m.getLatLng();
+                    document.getElementById("id_latitude").value = pos.lat;
+                    document.getElementById("id_longitude").value = pos.lng;
+                });
+            }
+        });
+        
+        // Hide location picker if role is HOSPITAL
+        var roleSelect = document.getElementById("id_role");
+        var locationSection = document.getElementById("location-section");
+        
+        function toggleLocation() {
+            if (roleSelect.value === 'HOSPITAL') {
+                locationSection.style.display = 'none';
+                document.getElementById("id_latitude").value = "";
+                document.getElementById("id_longitude").value = "";
+            } else {
+                locationSection.style.display = 'block';
+                // Trigger map invalidate size when displaying
+                setTimeout(function() {
+                    map.invalidateSize();
+                }, 100);
+            }
+        }
+        
+        roleSelect.addEventListener("change", toggleLocation);
+        toggleLocation();
+    });
+</script>
+{% endblock %}

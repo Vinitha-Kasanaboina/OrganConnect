@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Cryptographic Audit Logs - Admin Console{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="font-display mb-1 text-dark">📜 Cryptographic Audit Ledger Logs</h1>
+        <p class="text-muted mb-0">Immutable, blockchain-style SHA-256 hashed ledger tracking all administrative, verification, and allocation transactions.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'verify_ledger' %}" class="btn btn-primary px-3">
+            🛡️ Verify Chain Integrity
+        </a>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">← Return to Dashboard</a>
+    </div>
+</div>
+
+<div class="glass-card p-4">
+    <h3 class="h5 text-dark mb-3 font-display border-bottom pb-2">Blockchain Block Ledger History</h3>
+    {% if audit_logs %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle font-monospace" style="font-size: 0.85rem;">
+            <thead class="table-light">
+                <tr>
+                    <th>Block ID</th>
+                    <th>Timestamp</th>
+                    <th>Actor</th>
+                    <th>Action</th>
+                    <th>Details</th>
+                    <th>Current Hash</th>
+                    <th>Previous Hash</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in audit_logs %}
+                <tr>
+                    <td class="text-dark font-weight-bold">#{{ log.id }}</td>
+                    <td class="text-muted">{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
+                    <td><span class="text-dark fw-bold">{{ log.actor.username|default:"System" }}</span></td>
+                    <td><span class="badge bg-primary text-white fw-bold">{{ log.action }}</span></td>
+                    <td><span class="text-dark">{{ log.details }}</span></td>
+                    <td><code class="text-info">{{ log.hash|slice:":12" }}...</code></td>
+                    <td><code>{{ log.previous_hash|slice:":12" }}...</code></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted text-center py-4 mb-0">No audit records log found in database ledger.</p>
+    {% endif %}
+</div>
+{% endblock %}

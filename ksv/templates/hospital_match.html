@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}AI Matching Recommendations - Organ Connect{% endblock %}
+
+{% block extra_css %}
+<style>
+    .match-header {
+        margin-bottom: 2rem;
+        border-bottom: 1px solid var(--bg-card-border);
+        padding-bottom: 1rem;
+    }
+    .match-header h1 {
+        font-size: 2.25rem;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .match-card {
+        background: var(--bg-card);
+        backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--bg-card-border);
+        border-radius: 1.25rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        transition: var(--transition-smooth);
+    }
+    
+    .match-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(6, 182, 212, 0.15);
+        border-color: rgba(6, 182, 212, 0.3);
+    }
+    
+    @media (min-width: 900px) {
+        .match-card {
+            grid-template-columns: 1.5fr 1fr;
+        }
+    }
+    
+    .match-summary {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    
+    .match-entities {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(15, 23, 42, 0.4);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        border: 1px solid var(--bg-card-border);
+        margin-bottom: 1rem;
+    }
+    
+    .entity-box {
+        text-align: center;
+        flex: 1;
+    }
+    
+    .match-arrow {
+        font-size: 1.75rem;
+        color: var(--primary);
+        padding: 0 1rem;
+        font-weight: 800;
+        animation: pulse 2s infinite;
+    }
+    
+    .score-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .score-circle {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        color: #0f172a;
+        font-size: 1.25rem;
+        box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+    }
+    
+    .score-bar-wrapper {
+        flex: 1;
+        height: 8px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .score-bar-fill {
+        height: 100%;
+        background: linear-gradient(to right, var(--secondary), var(--primary));
+        border-radius: 4px;
+    }
+    
+    .rationale-list {
+        list-style-type: none;
+        padding-left: 0;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+    }
+    
+    .rationale-list li {
+        margin-bottom: 0.5rem;
+        padding-left: 1.25rem;
+        position: relative;
+    }
+    
+    .rationale-list li::before {
+        content: '✓';
+        position: absolute;
+        left: 0;
+        color: var(--primary);
+        font-weight: bold;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(1.1); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="match-header">
+    <a href="{% url 'dashboard' %}" class="nav-link" style="margin-bottom: 1rem; display: inline-block;">⬅️ Back to Hospital Dashboard</a>
+    <h1>AI-Based Compatibility Matching Pool</h1>
+    <p>Below are active cross-compatible pairings detected by the algorithm. Select a match to approve and register it in the official transparent audit history.</p>
+</div>
+
+{% if recommendations %}
+    {% for rec in recommendations %}
+    <div class="match-card">
+        <div class="match-summary">
+            <div>
+                <!-- Score Header -->
+                <div class="score-container">
+                    <div class="score-circle">{{ rec.score }}%</div>
+                    <div>
+                        <h3 style="font-family: var(--font-display);">Cross-Compatibility Match</h3>
+                        <p style="color: var(--text-muted); font-size: 0.85rem;">Organ: {{ rec.donor.organ }} | Blood Match Validated</p>
+                    </div>
+                </div>
+                
+                <div class="score-bar-wrapper">
+                    <div class="score-bar-fill" style="width: {{ rec.score }}%;"></div>
+                </div>
+                
+                <!-- Entities Pair details -->
+                <div class="match-entities" style="margin-top: 1.5rem;">
+                    <div class="entity-box">
+                        <span class="badge badge-verified">Donor</span>
+                        <h4 style="margin-top: 0.5rem; font-size: 1.1rem;">{{ rec.donor.anonymous_id }}</h4>
+                        <p style="color: var(--text-muted); font-size: 0.8rem;">Age: {{ rec.donor.age }} | Blood: {{ rec.donor.blood_group }}</p>
+                    </div>
+                    
+                    <div class="match-arrow">➜</div>
+                    
+                    <div class="entity-box">
+                        <span class="badge badge-matched">Receiver</span>
+                        <h4 style="margin-top: 0.5rem; font-size: 1.1rem;">{{ rec.receiver.anonymous_id }}</h4>
+                        <p style="color: var(--text-muted); font-size: 0.8rem;">Age: {{ rec.receiver.age }} | Blood: {{ rec.receiver.blood_group }}</p>
+                    </div>
+                </div>
+                
+                <!-- Rationale Details -->
+                <h4 style="font-family: var(--font-display); margin-bottom: 0.5rem;">Compatibility Rationale:</h4>
+                <ul class="rationale-list">
+                    {% for reason in rec.reasons %}
+                    <li>{{ reason }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            
+            <div>
+                <a href="{% url 'approve_match' rec.donor.pk rec.receiver.pk %}" class="btn-submit" style="display: block; text-align: center; text-decoration: none; padding: 0.8rem 1rem;">
+                    ✍️ Approve Match & Notify Parties
+                </a>
+            </div>
+        </div>
+        
+        <!-- Geographic map showing donor, receiver and hospital locations -->
+        <div>
+            <h4 style="font-family: var(--font-display); margin-bottom: 0.5rem;">📍 Dynamic Spatial Compatibility Map</h4>
+            <div id="match-map-{{ forloop.counter }}" class="map-wrapper" style="height: 300px; margin-top: 0.5rem;"></div>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="glass-card" style="text-align: center; padding: 4rem 2rem;">
+        <h2 style="font-family: var(--font-display); margin-bottom: 1rem; color: var(--text-muted);">No Recommended Matches Detected</h2>
+        <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto;">There are currently no compatible verified donor-receiver pairs in the active pool database. As new donors and receivers register and undergo medical audit verification, matches will automatically display here.</p>
+    </div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var hospitalLat = 12.9716;
+        var hospitalLng = 77.5946;
+        
+        {% if recommendations %}
+            {% for rec in recommendations %}
+                (function() {
+                    var donorLat = {{ rec.donor.user.profile.latitude|default:"null" }};
+                    var donorLng = {{ rec.donor.user.profile.longitude|default:"null" }};
+                    var recLat = {{ rec.receiver.user.profile.latitude|default:"null" }};
+                    var recLng = {{ rec.receiver.user.profile.longitude|default:"null" }};
+                    
+                    var mapId = 'match-map-{{ forloop.counter }}';
+                    var mapContainer = document.getElementById(mapId);
+                    
+                    if (mapContainer && donorLat && donorLng && recLat && recLng) {
+                        var map = L.map(mapId).setView([hospitalLat, hospitalLng], 9);
+                        
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; OpenStreetMap contributors'
+                        }).addTo(map);
+                        
+                        var donorMarker = L.marker([donorLat, donorLng]).addTo(map)
+                            .bindPopup("<b>Donor ID: {{ rec.donor.anonymous_id|escapejs }}</b><br>Organ: {{ rec.donor.organ }}");
+                            
+                        var recMarker = L.marker([recLat, recLng]).addTo(map)
+                            .bindPopup("<b>Receiver ID: {{ rec.receiver.anonymous_id|escapejs }}</b><br>Urgency: {{ rec.receiver.medical_urgency }}");
+                            
+                        var hospMarker = L.marker([hospitalLat, hospitalLng]).addTo(map)
+                            .bindPopup("<b>Government General Hospital</b><br>Match Center");
+                            
+                        // Draw polyline connecting Donor -> Hospital -> Receiver
+                        var route = L.polyline([
+                            [donorLat, donorLng],
+                            [hospitalLat, hospitalLng],
+                            [recLat, recLng]
+                        ], {color: '#818cf8', weight: 4, opacity: 0.8, dashArray: '6, 12'}).addTo(map);
+                        
+                        map.fitBounds(route.getBounds(), {padding: [30, 30]});
+                    } else if (mapContainer) {
+                        mapContainer.innerHTML = "<div style='display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:0.9rem;'>Location coordinates not fully registered for one or more parties. Map cannot be drawn.</div>";
+                    }
+                })();
+            {% endfor %}
+        {% endif %}
+    });
+</script>
+{% endblock %}

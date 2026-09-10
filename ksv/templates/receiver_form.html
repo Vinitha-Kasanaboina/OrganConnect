@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Receiver Profile Registration - Organ Connect{% endblock %}
+
+{% block content %}
+<div class="container my-4" style="max-width: 850px;">
+    <div class="glass-card">
+        <div class="text-center mb-4">
+            <h2 class="text-info font-display">Recipient Registration & Medical Document Submission</h2>
+            <p class="text-muted">Enter your basic details, organ requirement, and upload required authentic medical documents. Documents will be stored securely and reviewed exclusively by authorized Government Hospitals.</p>
+        </div>
+        
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <h4 class="text-info border-bottom border-secondary pb-2 mb-3">1. Basic & Urgency Details</h4>
+            
+            <div class="mb-3">
+                <label class="form-label" for="{{ form.name.id_for_label }}">Full Name</label>
+                {{ form.name }}
+                {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors }}</div>{% endif %}
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label" for="{{ form.age.id_for_label }}">Age</label>
+                    {{ form.age }}
+                    {% if form.age.errors %}<div class="text-danger small">{{ form.age.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="{{ form.gender.id_for_label }}">Gender</label>
+                    {{ form.gender }}
+                    {% if form.gender.errors %}<div class="text-danger small">{{ form.gender.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="{{ form.blood_group.id_for_label }}">Blood Group</label>
+                    {{ form.blood_group }}
+                    {% if form.blood_group.errors %}<div class="text-danger small">{{ form.blood_group.errors }}</div>{% endif %}
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label" for="{{ form.organ.id_for_label }}">Organ Needed</label>
+                    {{ form.organ }}
+                    {% if form.organ.errors %}<div class="text-danger small">{{ form.organ.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="{{ form.medical_urgency.id_for_label }}">Medical Priority / Urgency</label>
+                    {{ form.medical_urgency }}
+                    {% if form.medical_urgency.errors %}<div class="text-danger small">{{ form.medical_urgency.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="{{ form.contact_info.id_for_label }}">Contact Information</label>
+                    {{ form.contact_info }}
+                    {% if form.contact_info.errors %}<div class="text-danger small">{{ form.contact_info.errors }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="{{ form.hospital.id_for_label }}">Designated Verification Government Hospital</label>
+                {{ form.hospital }}
+                {% if form.hospital.errors %}<div class="text-danger small">{{ form.hospital.errors }}</div>{% endif %}
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label" for="{{ form.weight.id_for_label }}">Weight (kg)</label>
+                    {{ form.weight }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="{{ form.bp.id_for_label }}">Blood Pressure (BP)</label>
+                    {{ form.bp }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="{{ form.hla_typing.id_for_label }}">HLA Typing Code (If Available)</label>
+                    {{ form.hla_typing }}
+                </div>
+            </div>
+
+            <h4 class="text-info border-bottom border-secondary pb-2 mb-3 mt-4">2. Upload Required Medical Documents</h4>
+            <p class="text-muted small">Upload digital copies (PDF or images) of authentic medical diagnosis reports and transplant recommendation letters:</p>
+
+            <div class="row mb-3">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold" for="{{ form.doctor_diagnosis.id_for_label }}">Doctor's Diagnosis Report</label>
+                    {{ form.doctor_diagnosis }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold" for="{{ form.transplant_recommendation.id_for_label }}">Transplant Recommendation Letter</label>
+                    {{ form.transplant_recommendation }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold" for="{{ form.lab_reports.id_for_label }}">Laboratory Test Reports</label>
+                    {{ form.lab_reports }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold" for="{{ form.medical_history_doc.id_for_label }}">Medical History Document</label>
+                    {{ form.medical_history_doc }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold" for="{{ form.hla_report.id_for_label }}">HLA Tissue Typing Report (If Available)</label>
+                    {{ form.hla_report }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold" for="{{ form.supporting_document.id_for_label }}">Other Supporting Documents</label>
+                    {{ form.supporting_document }}
+                </div>
+            </div>
+
+            {% if documents %}
+            <div class="mb-4 p-3 bg-dark rounded border border-secondary">
+                <h6 class="text-info mb-2">📁 Already Uploaded Medical Documents:</h6>
+                <ul class="list-unstyled mb-0">
+                    {% for doc in documents %}
+                    <li class="mb-1">
+                        📄 <strong>{{ doc.get_document_type_display }}</strong>: 
+                        <a href="{% url 'download_medical_document' doc.pk %}" target="_blank" class="text-info">{{ doc.title|default:"View Document" }}</a>
+                        <span class="small text-muted">({{ doc.uploaded_at|date:"Y-m-d H:i" }})</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label class="form-label" for="{{ form.medical_history.id_for_label }}">Additional Condition Notes / Remarks</label>
+                {{ form.medical_history }}
+            </div>
+            
+            <button type="submit" class="btn btn-custom-primary w-100 py-3 mt-3 fs-5">Submit Registration & Medical Documents</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

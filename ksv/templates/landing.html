@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Organ Connect – AI-Based Organ Donation System{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hero Header */
+    .hero-title {
+        font-size: 2.75rem;
+        font-family: var(--font-display);
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 1rem;
+    }
+    .hero-title-accent {
+        background: linear-gradient(135deg, #0284c7, #059669);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.15rem;
+        color: #475569;
+        max-width: 750px;
+        margin: 0 auto 2.5rem auto;
+    }
+
+    /* Role Cards Grid */
+    .role-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 1.25rem;
+        padding: 2rem 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+    
+    .role-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .role-card-donor:hover {
+        border-color: #e11d48;
+        box-shadow: 0 12px 30px rgba(225, 29, 72, 0.15);
+    }
+    .role-card-receiver:hover {
+        border-color: #0284c7;
+        box-shadow: 0 12px 30px rgba(2, 132, 199, 0.15);
+    }
+    .role-card-hospital:hover {
+        border-color: #059669;
+        box-shadow: 0 12px 30px rgba(5, 150, 105, 0.15);
+    }
+    .role-card-admin:hover {
+        border-color: #7c3aed;
+        box-shadow: 0 12px 30px rgba(124, 58, 237, 0.15);
+    }
+
+    .role-icon {
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+        display: inline-block;
+    }
+
+    .role-card-donor .role-icon {
+        color: #e11d48;
+    }
+    .role-card-receiver .role-icon {
+        color: #0284c7;
+    }
+    .role-card-hospital .role-icon {
+        color: #059669;
+    }
+    .role-card-admin .role-icon {
+        color: #7c3aed;
+    }
+
+    .btn-proceed {
+        border-radius: 0.75rem;
+        font-weight: 700;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        border: none;
+    }
+    
+    .btn-proceed-donor {
+        background: linear-gradient(135deg, #e11d48, #be123c);
+        color: #fff !important;
+    }
+    .btn-proceed-receiver {
+        background: linear-gradient(135deg, #0284c7, #2563eb);
+        color: #fff !important;
+    }
+    .btn-proceed-hospital {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: #fff !important;
+    }
+    .btn-proceed-admin {
+        background: linear-gradient(135deg, #7c3aed, #6d28d9);
+        color: #fff !important;
+    }
+
+    .btn-proceed:hover {
+        transform: scale(1.03);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Section Styling */
+    .section-title {
+        font-family: var(--font-display);
+        color: #0f172a;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- HERO & ROLE SELECTION (FIRST SCREEN) -->
+<section id="home" class="text-center py-4 mb-5">
+    <h1 class="hero-title">Organ Connect – AI-Based Organ Donation System</h1>
+    <p class="hero-subtitle">
+        A secure, transparent, national organ matching platform uniting donors, recipients, government hospitals, and administration under an AI-driven compatibility engine.
+    </p>
+
+    <!-- FOUR ROLE CARDS CENTER GRID -->
+    <div class="row g-4 justify-content-center my-4">
+        <!-- DONOR CARD -->
+        <div class="col-lg-3 col-md-6">
+            <div class="role-card role-card-donor border-danger">
+                <div>
+                    <div class="role-icon">🫀</div>
+                    <h3 class="h4 text-dark font-display">Donor</h3>
+                    <p class="text-muted small mt-2">
+                        Pledge to donate organs. Submit your basic profile and upload authentic medical fitness certificates for hospital verification.
+                    </p>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'login' %}?role=donor" class="btn btn-proceed btn-proceed-donor w-100">Proceed →</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- RECEIVER CARD -->
+        <div class="col-lg-3 col-md-6">
+            <div class="role-card role-card-receiver border-info">
+                <div>
+                    <div class="role-icon">🏥</div>
+                    <h3 class="h4 text-dark font-display">Receiver</h3>
+                    <p class="text-muted small mt-2">
+                        Apply for the organ recipient waitlist. Upload doctor diagnosis reports and track AI compatibility score matching in real-time.
+                    </p>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'login' %}?role=receiver" class="btn btn-proceed btn-proceed-receiver w-100">Proceed →</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- GOVERNMENT HOSPITAL CARD -->
+        <div class="col-lg-3 col-md-6">
+            <div class="role-card role-card-hospital border-success">
+                <div>
+                    <div class="role-icon">🏛️</div>
+                    <h3 class="h4 text-dark font-display">Government Hospital</h3>
+                    <p class="text-muted small mt-2">
+                        Accredited Clinical Officers. Inspect uploaded patient medical documents, update approval statuses with remarks, and approve matches.
+                    </p>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'login' %}?role=hospital" class="btn btn-proceed btn-proceed-hospital w-100">Proceed →</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- MASTER ADMIN PORTAL CARD -->
+        <div class="col-lg-3 col-md-6">
+            <div class="role-card role-card-admin" style="border-color: #7c3aed;">
+                <div>
+                    <div class="role-icon">🛡️</div>
+                    <h3 class="h4 text-dark font-display">Master Admin Portal</h3>
+                    <p class="text-muted small mt-2">
+                        Manage users, hospitals, organ records, approvals, matching operations, and platform administration.
+                    </p>
+                </div>
+                <div class="mt-4">
+                    <a href="{% url 'admin_login' %}" class="btn btn-proceed btn-proceed-admin w-100">Proceed →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- LIVE STATS SUMMARY -->
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="glass-card text-center p-4 border-success">
+            <div class="fs-1 fw-bold text-success font-display">{{ total_donors }}</div>
+            <div class="text-muted text-uppercase fw-semibold small">Active Verified Donors</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="glass-card text-center p-4 border-info">
+            <div class="fs-1 fw-bold text-info font-display">{{ total_receivers }}</div>
+            <div class="text-muted text-uppercase fw-semibold small">Waitlisted Recipients</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="glass-card text-center p-4 border-warning">
+            <div class="fs-1 fw-bold text-warning font-display">{{ total_matches }}</div>
+            <div class="text-muted text-uppercase fw-semibold small">Matched Allocations</div>
+        </div>
+    </div>
+</div>
+
+<!-- ABOUT SECTION -->
+<section id="about" class="my-5 pt-4">
+    <div class="glass-card">
+        <h2 class="section-title text-info">About Organ Connect</h2>
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <p class="text-dark lead">
+                    Organ Connect is an advanced AI-assisted organ donation registry and matching platform designed to eliminate waiting list biases and streamline clinical verification.
+                </p>
+                <p class="text-muted">
+                    Rather than relying on manual data entry, Organ Connect empowers donors and receivers to upload authentic medical documents (blood reports, HLA tissue typing, doctor diagnosis, and fitness certificates). Approved Government Hospitals audit these documents, verify legitimacy, and supply clinical sign-off remarks.
+                </p>
+                <div class="row mt-3">
+                    <div class="col-md-6 mb-2">
+                        <span class="text-info fw-bold">✓ Multi-Factor AI Engine:</span> Matches based on Organ, ABO/Rh Blood Compatibility, HLA Tissue Alignment, Weight Ratio, and Urgency.
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <span class="text-info fw-bold">✓ Strict Admin Approval:</span> Hospitals must be authorized by System Administrators before accessing patient files.
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="p-4 bg-light rounded border border-secondary">
+                    <div class="fs-1 mb-2">🛡️</div>
+                    <h5 class="text-dark">Cryptographic Trust Ledger</h5>
+                    <p class="text-muted small mb-0">Every approval, registration, and allocation match is recorded in an immutable SHA-256 block ledger.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CONTACT SECTION -->
+<section id="contact" class="my-5 pt-4">
+    <div class="glass-card">
+        <h2 class="section-title text-success">Contact & Clinical Support</h2>
+        <div class="row">
+            <div class="col-md-6 mb-4 mb-md-0">
+                <h5 class="text-dark mb-3">National Organ Registry Head Office</h5>
+                <p class="text-muted mb-2">📍 Directorate of Health Services & Clinical Operations, Central Secretariat</p>
+                <p class="text-muted mb-2">📞 Helpline / Organ Transplant Emergency Hotline: <strong>1800-ORG-CONNECT (1800-674-2666)</strong></p>
+                <p class="text-muted mb-2">✉️ Email: <code>support@organconnect.gov.in</code></p>
+                <p class="text-muted">⏰ Hours: 24/7 Emergency Transplant Coordination Desk</p>
+            </div>
+            <div class="col-md-6">
+                <h5 class="text-dark mb-3">Government Hospital Onboarding</h5>
+                <p class="text-muted mb-3">Are you an accredited Government General Hospital seeking registry integration?</p>
+                <a href="{% url 'register_hospital' %}" class="btn btn-outline-success px-4 py-2">Submit Hospital Accreditation Request →</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- PUBLIC ALLOCATION REGISTRY -->
+<section class="my-5">
+    <div class="glass-card">
+        <h3 class="h5 text-info mb-3 font-display border-bottom border-secondary pb-2">Public Allocation Transparency Registry</h3>
+        {% if recent_matches %}
+        <div class="list-group list-group-flush bg-transparent">
+            {% for match in recent_matches %}
+            <div class="list-group-item bg-transparent text-dark border-secondary px-0 py-2 d-flex justify-content-between align-items-center">
+                <div>
+                    <strong class="text-success">Match Finalized</strong>: Donor <code>{{ match.donor.anonymous_id }}</code> matched with Receiver <code>{{ match.receiver.anonymous_id }}</code> (Organ: {{ match.donor.organ }} | Compatibility: <strong class="text-info">{{ match.compatibility_score }}%</strong>)
+                </div>
+                <div class="small text-muted font-monospace">
+                    Verified by: {{ match.verified_by.username }} | {{ match.matched_at|date:"Y-m-d H:i" }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted text-center py-3 mb-0">No match allocation transactions finalized in the public ledger yet.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

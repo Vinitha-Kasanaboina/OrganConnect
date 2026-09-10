@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Hospital Management - Admin Console{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="font-display mb-1 text-dark">🏛️ Government Hospital Management</h1>
+        <p class="text-muted mb-0">Approve pending hospital registration requests, activate/suspend access, and manage cross-hospital permissions.</p>
+    </div>
+    <div>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">← Return to Dashboard</a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- PENDING HOSPITALS CARD -->
+    <div class="col-12 mb-4">
+        <div class="glass-card p-4">
+            <h3 class="h5 text-dark mb-3 font-display border-bottom pb-2">⏳ Pending Hospital Registration Requests ({{ pending_hospitals.count }})</h3>
+            {% if pending_hospitals %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Hospital Name</th>
+                            <th>Reg. Number</th>
+                            <th>Address</th>
+                            <th>Authorized Officer</th>
+                            <th>Contact Info</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hosp in pending_hospitals %}
+                        <tr>
+                            <td><strong class="text-dark">{{ hosp.name }}</strong></td>
+                            <td><code class="text-primary">{{ hosp.registration_number }}</code></td>
+                            <td>{{ hosp.address|truncatechars:40 }}</td>
+                            <td>{{ hosp.authorized_officer }}</td>
+                            <td>{{ hosp.contact_info }}</td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'admin_hospital_approve' hosp.pk %}" class="btn btn-success btn-sm px-3">Approve Registration</a>
+                                    <a href="{% url 'admin_hospital_reject' hosp.pk %}" class="btn btn-outline-danger btn-sm px-3">Reject</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-3 mb-0">No pending hospital registration requests requiring audit.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- APPROVED & DIRECTORY HOSPITALS -->
+    <div class="col-12">
+        <div class="glass-card p-4">
+            <h3 class="h5 text-dark mb-3 font-display border-bottom pb-2">🏛️ Approved Government Hospital Directory</h3>
+            {% if approved_hospitals or rejected_hospitals %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Hospital Name</th>
+                            <th>Reg. Number</th>
+                            <th>Contact Info</th>
+                            <th>Registration Status</th>
+                            <th>Portal Access</th>
+                            <th>Cross-Hospital Authorization</th>
+                            <th>Manage Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hosp in approved_hospitals %}
+                        <tr>
+                            <td><strong class="text-dark">{{ hosp.name }}</strong></td>
+                            <td><code class="text-primary">{{ hosp.registration_number }}</code></td>
+                            <td>{{ hosp.contact_info }}</td>
+                            <td><span class="badge bg-success text-white">Approved</span></td>
+                            <td>
+                                {% if hosp.is_active %}
+                                    <span class="badge bg-primary text-white">Active</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Suspended</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% for auth_h in hosp.authorized_hospitals.all %}
+                                    <span class="badge bg-light text-dark border font-monospace mb-1">{{ auth_h.name }}</span>
+                                {% empty %}
+                                    <span class="text-muted small">None (Isolated Pool)</span>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'admin_hospital_toggle_status' hosp.pk %}" class="btn btn-sm {% if hosp.is_active %}btn-outline-warning{% else %}btn-success{% endif %}">
+                                        {% if hosp.is_active %}Deactivate / Suspend{% else %}Activate Access{% endif %}
+                                    </a>
+                                    <a href="{% url 'admin_hospital_authorize' hosp.pk %}" class="btn btn-sm btn-outline-info">Manage Cross-Access</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% for hosp in rejected_hospitals %}
+                        <tr class="text-muted">
+                            <td>{{ hosp.name }}</td>
+                            <td><code>{{ hosp.registration_number }}</code></td>
+                            <td>{{ hosp.contact_info }}</td>
+                            <td><span class="badge bg-danger text-white">Rejected</span></td>
+                            <td><span class="badge bg-secondary text-white">Revoked</span></td>
+                            <td>—</td>
+                            <td>—</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-3 mb-0">No registered hospitals in the system database.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
